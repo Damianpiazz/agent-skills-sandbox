@@ -1,98 +1,224 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useEffect, useState, useCallback } from "react"
+import { StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native"
+import { useRouter } from "expo-router"
+import { ThemedText } from "@/components/themed-text"
+import { ThemedView } from "@/components/themed-view"
+import { useAuth } from "@/hooks/use-auth"
+import { api } from "@/lib/api"
+import { Colors } from "@/constants/theme"
+import { useColorScheme } from "@/hooks/use-color-scheme"
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+interface DashboardData {
+  user: { id: string; name: string; email: string }
+  habits: {
+    total: number
+    completedToday: number
+    pending: number
+    todayHabits: { id: string; name: string; frequency: string }[]
+    completedTodayHabits: { id: string; name: string; frequency: string }[]
+    weeklyProgress: { day: string; count: number }[]
+  }
+  tasks: {
+    total: number
+    pending: number
+    completed: number
+    dueToday: number
+    weeklyProgress: { day: string; count: number }[]
+  }
+  streakSummary: { habitId: string; habitName: string; currentStreak: number }[]
+}
 
-export default function HomeScreen() {
+export default function DashboardScreen() {
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const colorScheme = useColorScheme()
+  const colors = Colors[colorScheme ?? "light"]
+  const { user } = useAuth()
+  const router = useRouter()
+
+  const fetchDashboard = useCallback(async () => {
+    const res = await api.get<DashboardData>("/dashboard")
+    if (res.success && res.data) setData(res.data)
+  }, [])
+
+  useEffect(() => {
+    fetchDashboard()
+  }, [fetchDashboard])
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    await fetchDashboard()
+    setRefreshing(false)
+  }, [fetchDashboard])
+
+  if (!data) {
+    return (
+      <ThemedView style={styles.center}>
+        <ActivityIndicator size="large" color={colors.tint} />
+      </ThemedView>
+    )
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
+      <ThemedText type="title" style={styles.greeting}>
+        Hi, {data.user.name.split(" ")[0]}!
+      </ThemedText>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
+      <ThemedView style={styles.statsRow}>
+        <StatCard
+          label="Habits Today"
+          value={`${data.habits.completedToday}/${data.habits.total}`}
+          color={colors.tint}
+        />
+        <StatCard
+          label="Tasks Pending"
+          value={String(data.tasks.pending)}
+          color="#e67e22"
+        />
+        <StatCard
+          label="Due Today"
+          value={String(data.tasks.dueToday)}
+          color="#e74c3c"
+        />
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+
+      {data.habits.todayHabits.length > 0 && (
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>Today's Habits</ThemedText>
+          {data.habits.todayHabits.map((h) => (
+            <ThemedView key={h.id} style={styles.item}>
+              <ThemedText>{h.name}</ThemedText>
+              <ThemedText style={styles.badge}>{h.frequency}</ThemedText>
+            </ThemedView>
+          ))}
+        </ThemedView>
+      )}
+
+      {data.streakSummary.length > 0 && (
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>Streaks</ThemedText>
+          {data.streakSummary.map((s) => (
+            <ThemedView key={s.habitId} style={styles.streakItem}>
+              <ThemedText>{s.habitName}</ThemedText>
+              <ThemedText style={[styles.streakCount, { color: colors.tint }]}>
+                {s.currentStreak} {s.currentStreak === 1 ? "day" : "days"}
+              </ThemedText>
+            </ThemedView>
+          ))}
+        </ThemedView>
+      )}
+
+      <TouchableOpacity
+        style={[styles.habitsButton, { backgroundColor: colors.tint }]}
+        onPress={() => router.push("/(tabs)/habits")}
+      >
+        <ThemedText style={styles.habitsButtonText}>Manage Habits</ThemedText>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.habitsButton, { backgroundColor: colors.tint }]}
+        onPress={() => router.push("/(tabs)/tasks")}
+      >
+        <ThemedText style={styles.habitsButtonText}>Manage Tasks</ThemedText>
+      </TouchableOpacity>
+    </ScrollView>
+  )
+}
+
+function StatCard({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <ThemedView style={styles.statCard}>
+      <ThemedText style={[styles.statValue, { color }]}>{value}</ThemedText>
+      <ThemedText style={styles.statLabel}>{label}</ThemedText>
+    </ThemedView>
+  )
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
+  content: {
+    padding: 16,
+    gap: 16,
+    paddingBottom: 32,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  greeting: {
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  statsRow: {
+    flexDirection: "row",
+    gap: 12,
   },
-});
+  statCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: "bold",
+  },
+  statLabel: {
+    fontSize: 12,
+    opacity: 0.6,
+    textAlign: "center",
+  },
+  section: {
+    gap: 8,
+  },
+  sectionTitle: {
+    marginBottom: 4,
+  },
+  item: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  badge: {
+    fontSize: 12,
+    opacity: 0.5,
+    textTransform: "capitalize",
+  },
+  streakItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  streakCount: {
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  habitsButton: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  habitsButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+})
