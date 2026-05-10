@@ -1,0 +1,13 @@
+# my-backend — Express + TypeScript + SQLite
+- Express 5 + TypeScript 6 + ESM (type: "module")
+- Entry point: src/app.ts
+- Dev: npm run dev (tsx watch src/app.ts)
+- Build: npm run build (tsc → dist/)
+- Módulos ESM — usar import/export, no require()
+- No usar __dirname ni __filename (no existen en ESM)
+- Usar import.meta.url para rutas de archivos si es necesario
+- Target ES2022, moduleResolution NodeNext
+- Puerto: 3000
+- Middleware global: express.json()
+- SQLite con better-sqlite3 (sincrónico, simple) o drizzle-orm (si prefieres ORM)
+- Migraciones versionadas en src/db/migrations/
