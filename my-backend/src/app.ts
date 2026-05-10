@@ -1,15 +1,28 @@
-import express from 'express'
+import express, { Request, Response, NextFunction } from "express"
+import { runMigrations } from "./db/migrate.js"
+import router from "./routes/index.js"
 
 const app = express()
 
 app.use(express.json())
 
-app.get('/', (req, res) => {
-    res.json({ message: 'API Express + TS funcionando 🚀' })
+await runMigrations()
+
+app.use("/api", router)
+
+app.get("/", (_req: Request, res: Response) => {
+  res.json({ success: true, message: "Agent Skills Sandbox API" })
 })
 
-const PORT = 3000
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(err.stack)
+  res.status(500).json({ success: false, error: err.message || "Internal server error" })
+})
+
+const PORT = process.env.PORT || 3000
 
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`)
+  console.log(`Server running on http://localhost:${PORT}`)
 })
+
+export default app
