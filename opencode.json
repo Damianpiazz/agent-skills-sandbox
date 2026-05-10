@@ -1,0 +1,68 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    "my-app/AGENTS.md",
+    "my-app/rules/*.md",
+    "my-backend/AGENTS.md",
+    "my-backend/rules/*.md"
+  ],
+  "permission": {
+    "edit": "ask",
+    "bash": {
+      "*": "ask",
+      "git status*": "allow",
+      "git diff*": "allow"
+    }
+  },
+  "agent": {
+    "rn-dev": {
+      "mode": "primary",
+      "description": "Desarrolla en my-app (React Native / Expo)",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "color": "#61DAFB",
+      "prompt": "{file:.opencode/agents/rn-dev.md}",
+      "permission": {
+        "edit": "allow",
+        "bash": {
+          "*": "ask",
+          "npm test*": "allow",
+          "npm run lint": "allow",
+          "npx expo*": "allow"
+        },
+        "skill": {
+          "react-native-*": "allow",
+          "git-release": "allow"
+        }
+      }
+    },
+    "backend-dev": {
+      "mode": "primary",
+      "description": "Desarrolla en my-backend (Express + SQLite)",
+      "model": "anthropic/claude-haiku-4-20250514",
+      "color": "#68A063",
+      "prompt": "{file:.opencode/agents/backend-dev.md}",
+      "permission": {
+        "edit": "allow",
+        "bash": {
+          "*": "ask",
+          "npm run dev": "allow",
+          "npm run build": "allow",
+          "npx tsx*": "allow"
+        },
+        "skill": {
+          "express-*": "allow",
+          "sqlite-*": "allow",
+          "git-release": "allow"
+        }
+      }
+    },
+    "plan": {
+      "mode": "primary",
+      "permission": {
+        "edit": "deny",
+        "bash": "deny"
+      }
+    }
+  }
+}
