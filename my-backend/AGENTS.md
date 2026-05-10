@@ -11,3 +11,5 @@
 - Middleware global: express.json()
 - SQLite con better-sqlite3 (sincrónico, simple) o drizzle-orm (si prefieres ORM)
 - Migraciones versionadas en src/db/migrations/
+- Tipos compartidos en shared/ — importar como ../../shared/types/...
+- Seguir TDD: cargar skill tdd-workflow antes de implementar features
