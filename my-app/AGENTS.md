@@ -13,3 +13,5 @@
 - Path alias: @/ → ./
 - Lint: npm run lint (expo lint)
 - No usar react-native-worklets-core directamente
+- Tipos compartidos en shared/ — importar como @/shared/types/...
+- Seguir TDD: cargar skill tdd-workflow antes de implementar features
