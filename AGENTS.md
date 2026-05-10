@@ -9,6 +9,7 @@ Aplicación React Native con Expo Router.
 - Comandos: `npm start`, `npm run ios`, `npm run android`, `npm run lint`
 - Path alias: `@/` → `./`
 - Reglas específicas en `my-app/AGENTS.md` y `my-app/rules/react-native.md`
+- Tipos compartidos en `shared/` — importar como `@/shared/types/...`
 
 ## my-backend/
 API REST con Express + TypeScript + SQLite.
@@ -16,6 +17,7 @@ API REST con Express + TypeScript + SQLite.
 - Stack: Express 5, TypeScript 6, ESM (NodeNext)
 - Comandos: `npm run dev`, `npm run build`
 - Reglas específicas en `my-backend/AGENTS.md` y `my-backend/rules/express-api.md`
+- Tipos compartidos en `shared/` — importar como `../../shared/types/...`
 
 Reglas:
 1. Identifica siempre en qué proyecto estás trabajando antes de actuar
